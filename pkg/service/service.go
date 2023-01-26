@@ -133,7 +133,7 @@ func (s *TaskService) FilterTask(masterTask model.MasterTask) (map[string]string
 func validateRequest(task model.MasterTask) error {
 	if len(task.Type) == 0 {
 		log.Printf("error %+v. missing 'type' field", http.StatusBadRequest)
-		return fmt.Errorf("error %+v: empty type", http.StatusBadRequest)
+		return fmt.Errorf("empty 'type' field")
 	}
 	return nil
 }

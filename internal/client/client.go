@@ -114,6 +114,9 @@ func (c *Client) Call(request interface{}, response *model.Card, httpMethod stri
 
 	req, err := http.NewRequest(httpMethod, url, bytes.NewReader(b))
 	req.Header.Add("Content-Type", "application/json")
+	if err != nil {
+		return fmt.Errorf("error creating request, %w", err)
+	}
 
 	resp, err := c.Connector.Do(req)
 	if err != nil {
@@ -121,14 +124,17 @@ func (c *Client) Call(request interface{}, response *model.Card, httpMethod stri
 	}
 
 	output, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response body, %w", err)
+	}
 
 	switch {
 	case !c.isSuccess(resp.StatusCode):
 		log.Printf("response error, code: %v", resp.StatusCode)
 		return fmt.Errorf("error returned from external API")
 	default:
-		log.Printf("success. code: %v", resp.StatusCode)
-		err = json.Unmarshal(output, &response)
+		log.Printf("successful client response. code: %v", resp.StatusCode)
+		_ = json.Unmarshal(output, &response)
 	}
 
 	return nil

@@ -50,10 +50,12 @@ Response:
 ### Create a bug
 Request:
 ```
-{
+curl --location --request POST 'http://localhost:3000/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
     "type": "bug",
     "description": "Replace old buttons in dashboard"
-}
+}'
 ```
 
 Response:
@@ -75,11 +77,13 @@ If the category is not any of the mentioned it will return an error.
 
 Request:
 ```
-{
+curl --location --request POST 'http://localhost:3000/' \
+--header 'Content-Type: application/json' \
+--data-raw '{
     "type": "task",
     "title": "Refill oil in engine to reduce friction",
     "category": "Maintenance"
-}
+}'
 ```
 
 Response:

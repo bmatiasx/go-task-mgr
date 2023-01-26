@@ -42,42 +42,69 @@ func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (h *TaskHandler) handleWelcome(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s API was called", r.URL)
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(h.service.Welcome()))
+	_, err := w.Write([]byte(h.service.Welcome()))
+	if err != nil {
+		log.Fatalf("error writing json response. %s", err)
+	}
 }
 
 func (h *TaskHandler) handleTask(w http.ResponseWriter, r *http.Request) {
 	log.Printf("handling new task")
 
-	masterTask := unmarshalMasterTask(w, r)
+	masterTask, err := unmarshalMasterTask(w, r)
+	if err != nil {
+		res := map[string]string{
+			"error":   fmt.Sprintf("%+v", http.StatusBadRequest),
+			"message": err.Error(),
+		}
+		jsonRes, err := json.Marshal(res)
+		if err != nil {
+			log.Fatalf("error marshaling json response. %s", err)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, err = w.Write(jsonRes)
+		if err != nil {
+			log.Fatalf("error writing json response. %s", err)
+		}
+		return
+	}
 
 	res, err := h.service.FilterTask(masterTask)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte(fmt.Sprintf("%s", err.Error())))
+		log.Fatalf("error creating task. %s", err)
 		return
 	}
-	jsonRes, err := json.Marshal(res)
 
+	jsonRes, err := json.Marshal(res)
 	if err != nil {
 		log.Fatalf("error marshaling json response. %s", err)
 	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write(jsonRes)
+	_, err = w.Write(jsonRes)
+	if err != nil {
+		log.Fatalf("error writing json response. %s", err)
+	}
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s endpoint not found", r.URL)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("not found"))
+	_, err := w.Write([]byte("not found"))
+	if err != nil {
+		log.Fatalf("error writing json response. %s", err)
+	}
 }
 
-func unmarshalMasterTask(w http.ResponseWriter, r *http.Request) model.MasterTask {
+func unmarshalMasterTask(w http.ResponseWriter, r *http.Request) (model.MasterTask, error) {
 	// Read body
 	b, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
 		log.Println("Error while reading request body")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	// Unmarshal
@@ -85,7 +112,7 @@ func unmarshalMasterTask(w http.ResponseWriter, r *http.Request) model.MasterTas
 	err = json.Unmarshal(b, &masterTask)
 	if err != nil {
 		log.Println("Error while unmarshalling request")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return model.MasterTask{}, fmt.Errorf("error while unmarshalling request")
 	}
-	return masterTask
+	return masterTask, nil
 }
