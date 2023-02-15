@@ -100,14 +100,4 @@ Response:
 }
 ```
 
-## Technical debt
-
-- Unit tests
-- Validate string fields to accept alphabet only characters
-
-## Trello board access
-Trello board can be checked in the link below after joining as a member:
-
-`https://trello.com/invite/b/kK0RimXn/ATTI7adc4eb61e28a9b4e7dfc0a6c91568f1368B7D0A/sprint-001`
-
 
