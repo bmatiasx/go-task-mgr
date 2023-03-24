@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -101,7 +102,13 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 func unmarshalMasterTask(w http.ResponseWriter, r *http.Request) (model.MasterTask, error) {
 	// Read body
 	b, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Fatalf("Error cloding body")
+			return
+		}
+	}(r.Body)
 	if err != nil {
 		log.Println("Error while reading request body")
 		http.Error(w, err.Error(), http.StatusBadRequest)
