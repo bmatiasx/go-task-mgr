@@ -10,102 +10,109 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/bmatiasx/go-task-mgr/internal/cfg"
 	"github.com/bmatiasx/go-task-mgr/internal/model"
 )
 
-const (
-	cardsPath   = "1/cards"
-	toDoListId  = "63bdd2e8fdf46c026cf9aff9"
-	doingListId = "63bdd2e8fdf46c026cf9affa"
+const cardsPath = "1/cards"
 
-	bugLabelId         = "63bdd2e87eabf59db1b0ad81"
-	maintenanceLabelId = "63bdd2e87eabf59db1b0ad7b"
-	researchLabelId    = "63bdd2e87eabf59db1b0ad87"
-	testLabelId        = "63bdd2e87eabf59db1b0ad85"
-)
-
-type Connector interface {
-	Do(req *http.Request) (*http.Response, error)
-}
+//type Connector interface {
+//	Do(req *http.Request) (*http.Response, error)
+//}
 
 type Client struct {
-	URL    string
-	APIKey string
-	Token  string
-	Connector
+	URL                string
+	APIKey             string
+	Token              string
+	AppPort            string
+	ToDoListId         string
+	DoingListId        string
+	BugLabelId         string
+	MaintenanceLabelId string
+	ResearchLabelId    string
+	TestLabelId        string
+	client             *http.Client
 }
 
-func New(url, apiKey, token string) *Client {
-	return &Client{
-		URL:    url,
-		APIKey: apiKey,
-		Token:  token,
-		Connector: &http.Client{
+func New(cfg cfg.Config) *Client {
+	c := Client{
+		URL:                cfg.URL,
+		APIKey:             cfg.APIKey,
+		Token:              cfg.Token,
+		AppPort:            cfg.AppPort,
+		ToDoListId:         cfg.ToDoListId,
+		DoingListId:        cfg.DoingListId,
+		BugLabelId:         cfg.BugLabelId,
+		MaintenanceLabelId: cfg.MaintenanceLabelId,
+		ResearchLabelId:    cfg.ResearchLabelId,
+		TestLabelId:        cfg.TestLabelId,
+		client: &http.Client{
 			Timeout: time.Duration(10) * time.Second,
 		},
 	}
+	return &c
 }
 
 func (c *Client) CreateIssue(request model.Issue) (*model.Card, error) {
-	url := fmt.Sprintf("%s/%s?idList=%s&key=%s&token=%s", c.URL, cardsPath, toDoListId, c.APIKey, c.Token)
+	url := fmt.Sprintf("%s/%s?idList=%s&key=%s&token=%s", c.URL, cardsPath, c.ToDoListId, c.APIKey, c.Token)
 	log.Printf("creating an issue with Trello API with url: %s", url)
 
 	payload := map[string]string{
 		"name": request.Title,
 		"desc": request.Description,
 	}
-	issueResp := &model.Card{}
+	issueResp := model.Card{}
 
-	err := c.Call(payload, issueResp, http.MethodPost, url)
+	err := c.call(payload, &issueResp, http.MethodPost, url)
 	if err != nil {
 		log.Printf("error while creating an issue")
 		return nil, fmt.Errorf("error: %s", err.Error())
 	}
-	return issueResp, nil
+	return &issueResp, nil
 }
 
 func (c *Client) CreateBug(request model.Bug) (*model.Card, error) {
-	url := fmt.Sprintf("%s/%s?idList=%s&key=%s&token=%s", c.URL, cardsPath, doingListId, c.APIKey, c.Token)
+	url := fmt.Sprintf("%s/%s?idList=%s&key=%s&token=%s", c.URL, cardsPath, c.DoingListId, c.APIKey, c.Token)
 	bugTitle := makeBugTitle()
 	log.Printf("creating a bug with Trello API with url: %s \nand title: %s", url, bugTitle)
 
 	payload := map[string]string{
 		"name":     bugTitle,
 		"desc":     request.Description,
-		"idLabels": bugLabelId,
+		"idLabels": c.BugLabelId,
 	}
-	bugResp := &model.Card{}
+	bugResp := model.Card{}
 
-	err := c.Call(payload, bugResp, http.MethodPost, url)
+	err := c.call(payload, &bugResp, http.MethodPost, url)
 	if err != nil {
 		log.Printf("error while creating a bug")
 		return nil, fmt.Errorf("error: %s", err.Error())
 	}
-	return bugResp, nil
+	return &bugResp, nil
 }
 
 func (c *Client) CreateTask(request model.Task) (*model.Card, error) {
-	url := fmt.Sprintf("%s/%s?idList=%s&key=%s&token=%s", c.URL, cardsPath, toDoListId, c.APIKey, c.Token)
+	url := fmt.Sprintf("%s/%s?idList=%s&key=%s&token=%s", c.URL, cardsPath, c.ToDoListId, c.APIKey, c.Token)
 	log.Printf("creating a task with Trello API with url: %s", url)
 
-	label := setLabel(request.Category)
+	label := c.setLabel(request.Category)
 
 	payload := map[string]string{
 		"name":     request.Title,
 		"desc":     fmt.Sprintf("Belongs to category %s", request.Category),
 		"idLabels": label,
 	}
-	taskResp := &model.Card{}
+	taskResp := model.Card{}
 
-	err := c.Call(payload, taskResp, http.MethodPost, url)
+	err := c.call(payload, &taskResp, http.MethodPost, url)
 	if err != nil {
 		log.Printf("error while creating a task")
 		return nil, fmt.Errorf("error: %s", err.Error())
 	}
-	return taskResp, nil
+	return &taskResp, nil
 }
 
-func (c *Client) Call(request interface{}, response *model.Card, httpMethod string, url string) error {
+func (c *Client) call(request interface{}, response *model.Card, httpMethod string, url string) error {
 
 	b, err := json.Marshal(request)
 	if err != nil {
@@ -118,7 +125,7 @@ func (c *Client) Call(request interface{}, response *model.Card, httpMethod stri
 		return fmt.Errorf("error creating request, %w", err)
 	}
 
-	resp, err := c.Connector.Do(req)
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("error sending request, %w", err)
 	}
@@ -158,11 +165,11 @@ func makeBugTitle() string {
 	return fmt.Sprintf("bug-critical-%v", n)
 }
 
-func setLabel(category string) string {
+func (c *Client) setLabel(category string) string {
 	categoryToLabel := map[string]string{
-		"Maintenance": maintenanceLabelId,
-		"Research":    researchLabelId,
-		"Test":        testLabelId,
+		"Maintenance": c.MaintenanceLabelId,
+		"Research":    c.ResearchLabelId,
+		"Test":        c.TestLabelId,
 	}
 	return categoryToLabel[category]
 }

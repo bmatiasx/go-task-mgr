@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  api:
+    build: .. # reads and builds Dockerfile in current directory
+    ports:
+      - "9090:3000"
+    env_file:
+      - ./internal/cfg/vars.env
+    image: go-task-mgr
