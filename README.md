@@ -8,12 +8,26 @@ Trello board that was created for the sake of interacting between teams faster a
 clearer.
 
 ## Instructions
-To run the application first open a CLI and then move to the `cmd` directory. There
-type in the CLI the following command to run the application:
+Since this application is containerized Docker is needed to run it. If you don't have it installed you can check the 
+following [guide](https://docs.docker.com/engine/install/) to install Docker in your computer.
+
+Once installed go to the root directory and execute the command:
+
+> docker-compose up
+
+Now the application is running on port 9090.
+
+You can check it by sending a request to the welcome API which is at `<host>:9090/api/v1/welcome`
+The response should look like:
+
 ```
-go run main.go
+{
+    "message": "Welcome to the Card Service" 
+}
 ```
-There are three task types that we can create with this API. Those are: 
+
+## Cards
+There are three card types that we can create with this API. Those are: 
 - issue
 - bug
 - task

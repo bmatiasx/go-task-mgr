@@ -18,21 +18,20 @@ const (
 )
 
 type TaskHandler struct {
-	service service.TaskService
+	service service.Servicer
 }
 
-func New(s service.TaskService) *TaskHandler {
-	handler := TaskHandler{service: s}
-	return &handler
+func New(s service.Servicer) *TaskHandler {
+	return &TaskHandler{service: s}
 }
 
 func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case r.Method == http.MethodGet && r.URL.Path == welcome:
-		h.handleWelcome(w, r)
+		h.HandleWelcome(w, r)
 		return
 	case r.Method == http.MethodPost && r.URL.Path == task:
-		h.handleTask(w, r)
+		h.HandleTask(w, r)
 		return
 	default:
 		notFound(w, r)
@@ -40,16 +39,25 @@ func (h *TaskHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *TaskHandler) handleWelcome(w http.ResponseWriter, r *http.Request) {
+func (h *TaskHandler) HandleWelcome(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s API was called", r.URL)
+
+	res := map[string]string{
+		"message": h.service.Welcome(),
+	}
+	jsonRes, err := json.Marshal(res)
+	if err != nil {
+		log.Fatalf("error marshaling json response. %s", err)
+	}
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, err := w.Write([]byte(h.service.Welcome()))
+	_, err = w.Write(jsonRes)
 	if err != nil {
 		log.Fatalf("error writing json response. %s", err)
 	}
 }
 
-func (h *TaskHandler) handleTask(w http.ResponseWriter, r *http.Request) {
+func (h *TaskHandler) HandleTask(w http.ResponseWriter, r *http.Request) {
 	log.Printf("handling new task")
 
 	masterTask, err := unmarshalMasterTask(w, r)

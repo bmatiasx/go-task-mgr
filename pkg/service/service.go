@@ -9,6 +9,11 @@ import (
 	"github.com/bmatiasx/go-task-mgr/internal/model"
 )
 
+type Servicer interface {
+	Welcome() string
+	FilterTask(masterTask model.MasterTask) (map[string]string, error)
+}
+
 type TaskService struct {
 	client.Client
 }
@@ -18,7 +23,7 @@ func New(client client.Client) *TaskService {
 }
 
 func (s *TaskService) Welcome() string {
-	return "Welcome to the Task Service!"
+	return "Welcome to the Card Service!"
 }
 
 func (s *TaskService) FilterTask(masterTask model.MasterTask) (map[string]string, error) {

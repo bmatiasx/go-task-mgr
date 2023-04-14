@@ -18,7 +18,7 @@ func main() {
 	config := cfg.Setup()
 
 	clientConnector := *client.New(config)
-	srv := *service.New(clientConnector)
+	srv := service.New(clientConnector)
 
 	mux := http.NewServeMux()
 	mux.Handle("/", controller.New(srv))
