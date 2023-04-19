@@ -14,26 +14,16 @@ type Servicer interface {
 	FilterTask(masterTask model.MasterTask) (map[string]string, error)
 }
 
-type strategy interface {
-	createCard(task model.MasterTask) (map[string]string, error)
-}
-
 type TaskService struct {
 	client.Client
-	strategy
 }
 
 func New(client client.Client) *TaskService {
-	return &TaskService{client, nil}
+	return &TaskService{client}
 }
 
 func (s *TaskService) Welcome() string {
 	return "Welcome to the Card Service!"
-}
-
-func (s *TaskService) createCard(task model.MasterTask) (map[string]string, error) {
-
-	return nil, nil
 }
 
 func (s *TaskService) FilterTask(masterTask model.MasterTask) (map[string]string, error) {
