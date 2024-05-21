@@ -21,31 +21,43 @@ const cardsPath = "1/cards"
 //}
 
 type Client struct {
-	URL                string
-	APIKey             string
-	Token              string
-	AppPort            string
-	ToDoListId         string
-	DoingListId        string
-	BugLabelId         string
+	URL     string
+	APIKey  string
+	Token   string
+	AppPort string
+	TaskIds
+	LabelIds
+	client *http.Client
+}
+
+type TaskIds struct {
+	ToDoListId  string
+	DoingListId string
+	BugLabelId  string
+}
+
+type LabelIds struct {
 	MaintenanceLabelId string
 	ResearchLabelId    string
 	TestLabelId        string
-	client             *http.Client
 }
 
 func New(cfg cfg.Config) *Client {
 	c := Client{
-		URL:                cfg.URL,
-		APIKey:             cfg.APIKey,
-		Token:              cfg.Token,
-		AppPort:            cfg.AppPort,
-		ToDoListId:         cfg.ToDoListId,
-		DoingListId:        cfg.DoingListId,
-		BugLabelId:         cfg.BugLabelId,
-		MaintenanceLabelId: cfg.MaintenanceLabelId,
-		ResearchLabelId:    cfg.ResearchLabelId,
-		TestLabelId:        cfg.TestLabelId,
+		URL:     cfg.URL,
+		APIKey:  cfg.APIKey,
+		Token:   cfg.Token,
+		AppPort: cfg.AppPort,
+		TaskIds: TaskIds{
+			ToDoListId:  cfg.ToDoListId,
+			DoingListId: cfg.DoingListId,
+			BugLabelId:  cfg.BugLabelId,
+		},
+		LabelIds: LabelIds{
+			MaintenanceLabelId: cfg.MaintenanceLabelId,
+			ResearchLabelId:    cfg.ResearchLabelId,
+			TestLabelId:        cfg.TestLabelId,
+		},
 		client: &http.Client{
 			Timeout: time.Duration(10) * time.Second,
 		},
