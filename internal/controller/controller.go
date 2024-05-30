@@ -45,12 +45,15 @@ func (h *TaskHandler) HandleWelcome(w http.ResponseWriter, r *http.Request) {
 	res := map[string]string{
 		"message": h.service.Welcome(),
 	}
+
 	jsonRes, err := json.Marshal(res)
 	if err != nil {
 		log.Fatalf("error marshaling json response. %s", err)
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
 	_, err = w.Write(jsonRes)
 	if err != nil {
 		log.Fatalf("error writing json response. %s", err)
@@ -66,12 +69,15 @@ func (h *TaskHandler) HandleTask(w http.ResponseWriter, r *http.Request) {
 			"error":   fmt.Sprintf("%+v", http.StatusBadRequest),
 			"message": err.Error(),
 		}
+
 		jsonRes, err := json.Marshal(res)
 		if err != nil {
 			log.Fatalf("error marshaling json response. %s", err)
 		}
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
+
 		_, err = w.Write(jsonRes)
 		if err != nil {
 			log.Fatalf("error writing json response. %s", err)
@@ -89,8 +95,10 @@ func (h *TaskHandler) HandleTask(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalf("error marshaling json response. %s", err)
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+
 	_, err = w.Write(jsonRes)
 	if err != nil {
 		log.Fatalf("error writing json response. %s", err)
@@ -99,8 +107,10 @@ func (h *TaskHandler) HandleTask(w http.ResponseWriter, r *http.Request) {
 
 func notFound(w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s endpoint not found", r.URL)
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusNotFound)
+
 	_, err := w.Write([]byte("not found"))
 	if err != nil {
 		log.Fatalf("error writing json response. %s", err)
@@ -113,7 +123,7 @@ func unmarshalMasterTask(w http.ResponseWriter, r *http.Request) (model.MasterTa
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Fatalf("Error cloding body")
+			log.Fatalf("Error closing body")
 			return
 		}
 	}(r.Body)
@@ -124,6 +134,7 @@ func unmarshalMasterTask(w http.ResponseWriter, r *http.Request) (model.MasterTa
 
 	// Unmarshal
 	var masterTask model.MasterTask
+
 	err = json.Unmarshal(b, &masterTask)
 	if err != nil {
 		log.Println("Error while unmarshalling request")
